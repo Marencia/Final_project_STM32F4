@@ -282,17 +282,17 @@ void BSP_AUDIO_OUT_Error_CallBack(void)
   * @param  None
   * @retval None
   */
-void WavePlayerStart(void)
+void WavePlayerStart(void) //Aquí comienza la reproducción
 {
-  UINT bytesread = 0;
-  char path[] = "0:/";
-  char* wavefilename = NULL;
-  WAVE_FormatTypeDef waveformat;
+  UINT bytesread = 0; // cantidad de bytes leidos 
+  char path[] = "0:/"; //dirección de archivo de lectura 
+  char* wavefilename = NULL; //puntero con dirección de archivo de lectura
+  WAVE_FormatTypeDef waveformat; //define la variable waveformat con la estructura de 
   
   /* Get the read out protection status */
-  if(f_opendir(&Directory, path) == FR_OK)
+  if(f_opendir(&Directory, path) == FR_OK) //FR_OK=0; succeed
   {
-    if(WaveRecStatus == 1)
+    if(WaveRecStatus == 1) /* Variable used to switch play from audio sample available on USB to recorded file inicializada en 0*/
     {
       wavefilename = REC_WAVE_NAME;
     }
