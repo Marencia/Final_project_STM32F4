@@ -1,0 +1,457 @@
+En el waveplayer se encuentra el PLAY_REPEAT_DISABLED
+que es la funcion que detiene el loop en el main.h
+
+en waveplayer:
+
+#ifdef PLAY_REPEAT_DISABLED 
+  RepeatState = REPEAT_OFF;
+  /* Stop playing Wave */
+  WavePlayerStop();
+  /* Close file */
+  f_close(&FileRead);
+  /* Test on the command: Playing */
+  if(CmdIndex == CMD_PLAY)
+  {
+    LEDsState = LED4_TOGGLE; //este es el led
+que se enciende cuando esta a la espera de 
+una nueva grabación. Y se pone en CMD_PLAY??
+  }
+
+En el main.h están definidas tres variables
+#define CMD_PLAY           ((uint32_t)0x00)
+#define CMD_RECORD         ((uint32_t)0x01)
+#define CMD_STOP           ((uint32_t)0x02)
+
+VOLVIENDO AL MAIN.C
+
+Cuando presiono el boton para grabar 
+comienza la funcion de grabacion y Cmd_Index
+toma el valor de CMD_RECORD. 
+Luego vuelvo a presionar y corta la grabacion
+y pasa automaticamente a la reproducción.
+
+
+********************************************
+
+Encontre donde utilizaba la variable en estado 
+CMD_STOP:
+
+ if (CmdIndex != CMD_RECORD)//acá tengo que modificar algo? //creo que acá es donde con el pulsador se modifica el valor de la variable CmdIndex
+      {
+        /* Stop Audio Recording */
+        WaveRecorderStop();
+        /* Switch Command Index to Play */
+        CmdIndex = CMD_PLAY;//ACA CAMBIA EL ESTADO DE GRABACION AL DE PLAY QUE DESP USA EL MAIN.C linea 223
+        /* Toggoling LED6 to signal Play */
+        LEDsState = LED6_TOGGLE; //se enciende el led azul cuando se pone en play
+        break;
+      }
+    }
+    else /* End of recording time TIME_REC *///si esta es la opcion para cuando se terminan los segundos para grabar y "hace lo mismo que si para al agrabacion el usuario" por qué pasa a cmdIndex=CMD_STOP y no CMD_PLAY?
+    {
+      /* Stop Audio Recording */
+      WaveRecorderStop();
+      /* Change Command Index to Stop */
+      CmdIndex = CMD_STOP;
+      /* Toggoling LED4 to signal Stop */
+      LEDsState = LED4_TOGGLE; //este es el led que se enciende cuando está a la espera de una nueva grabación
+      AUDIODataReady = 0;
+      break;
+    }
+
+**********************************************
+2-09-22
+Agregué al main.c lineas de case para probar el 
+estado de CmdIndex=CMD_STOP de la siguiente manera:
+
+static void COMMAND_AudioExecuteApplication(void)
+{
+  /* Execute the command switch the command index */
+  switch (CmdIndex)
+  {
+    /* Start Playing from USB Flash memory */
+  case CMD_PLAY:
+    if (RepeatState == REPEAT_ON)
+      WavePlayerStart();
+    break;
+    
+    /*Agrego estas lineas para probar si se detiene cuando termino de grabar*/
+  case CMD_STOP:
+	  RepeatState = REPEAT_ON;//estaría bien porque después de que se detenga quiero que vuelva a reproducir
+	  WaveRecorderStop();//creo que esto no va porque ya se lo detiene con CmdIndex!=CMD_RECORD
+	  WavePlayerStop();
+	  
+	  break;
+	  
+    /* Start Recording in USB Flash memory */ 
+  case CMD_RECORD:
+    RepeatState = REPEAT_ON;//es como si esta variable fuese la conexion entre el CMD_PLAY
+    WaveRecorderProcess();
+    break;
+  
+  default:
+    break;
+  }
+}
+
+Así no modifica nada, por eso voy a ver los otros archivos
+y tambien deberia ver la interaccion entre placa y
+ususario alla por la linea 463 del main.c
+
+Cambié la linea 180 de waverecorder.c
+CmdIndex= CMD_STOP;
+Cambié la linea 182 de waverecorder.c
+LEDsState = LED4_TOGGLE; esto es lo que hace que cambie
+
+Habiendo hecho todo esto, sigue haciendo lo mismo. Lo
+unico que cambia es que entra el estado de la 
+linea 182 del waverecorder.c pero por muy poco tiempo
+No se llega a notar que para y tampoco se mantiene
+en ese estado (led verde)
+Voy a dejar el codigo como está y seguir probando cosas.
+
+No me peguen pero agregué un Hal_Delay en waverecorder.c
+en 183 para ver si se quedaba un rato más ahí
+
+no hizo nada
+
+Cambié la linea 476 de main.c
+CmdIndex = CMD_STOP;
+antes era CMD_PLAY
+
+pruebo
+
+hace lo mismo
+
+cambio 473 RepeatState=REPEAT_OFF; en main.c
+
+pruebo 
+
+SE PASA AL ESTADO DE PAUSA!!
+Pero ahora no pasa al estado de reproducir jajajja
+Aveeerrr
+
+desp de un tiempo si paso.... raro
+lo hizo una sola vez... más raro
+
+Claramente estan relacionadas las de CmdIndex y 
+RepeatState
+como? no sé. Lo averiguaremos.
+
+cambie linea 236 de main.c
+de repaet on a repeat_off
+y voy a volver a como estaba la lina 473 a repeat on
+
+pruebo
+
+vuelve a hacer lo que hacia antes de quedarse en el stop
+
+Así que vuelvo a como había logrado que se quede en stop
+
+cambie la linea 484 de main.c
+el else lo transforme a else if 
+
+    else if (CmdIndex == CMD_STOP)
+
+pruebo
+
+se sigue quedando trabado en el led verde
+
+Voy a volver a poner la linea 476 en CMD_PLAY;
+
+pruebo
+
+no cambia
+
+comente todo lo que había escrito hoy como CASE
+en el main.c
+
+pruebo
+
+hace lo mismo que antes
+lo que me di cuenta es que cuando lo dejo grabando el
+tiempo maximo de grabacion que son 30 seg
+sigue haciendo lo que hacia antes de reproducir 
+directamente lo que grabo, sin pasar por el estado de stop
+
+Hay una parte del waverecorder.c que le dice que cuando
+llega el timeout haga algo... pero lo que le dice es:
+
+else /* End of recording time TIME_REC */
+    {
+      /* Stop Audio Recording */
+      WaveRecorderStop();
+      /* Change Command Index to Stop */
+      CmdIndex = CMD_STOP;
+      /* Toggoling LED4 to signal Stop */
+      LEDsState = LED4_TOGGLE; //este es el led que se enciende cuando está a la espera de una nueva grabación
+      AUDIODataReady = 0;
+      break;
+
+lo unico que hace es ir a waveRecorderStop
+Desp va a la posicion de STOP a la espera de una nueva
+grabación
+Por eso voy a la funcion de WaveRecorderStop
+que me lleva a BSP_AUDIO_IN_Stop
+
+volvi a cambiar la linea 180 de waverecorder.c
+para ver si igualmente se queda en stop cuando termino
+de grabar (CmdIndex = CMD_PLAY)
+
+pruebo
+
+Efectivamente se queda en el stop así que lo dejo así
+
+Voy a leer el waveplayer por las dudas
+
+paro acá porq ya me quemé
+
+********************************************************
+5-10-22
+
+Volviendo a lo que quería hacer.
+Necesito que al presionar el boton de grabar, comience a grabar.
+Luego al volver a presionarlo, tiene que pasar al modo STOP.
+y cuando vuelva a apretarlo debe pasaar al modo reproducción.
+
+Que reproduzca todo.
+
+Una vez controlado todo lo anterior, lo ideal sería que
+en el medio de la repoducción tambien lo pueda parar 
+cuando quiera pero sin volver a entrar al modo grabacion.
+
+Eso es todo, desp lo replico para la botonera matricial.
+
+Aún no encontré la relacion entre la variable CmdIndex y RepeatState
+
+Creo que ahí está la clave para hacer todo lo que quiero
+Tal vez tenga que crear un estado intermedio para
+que cuando pare la grabación no me cierre la carpeta
+donde está la grabación. Porque sino desp como la reanudo?
+
+Por lo que dice en el ifdef del waveplayer...
+
+Pero voy a volver a revisar todo el codigo desde main, porque siento que
+me pierdo cuando entro a un archivo de waveplayer o waverecorder sin 
+saber como o desde donde fueron invocadas.
+
+Lo que veo en los archivos de waveplayer es que cuando ejecuta
+la funcion de por ejemplo, WavePlayerStop, entra a una función
+que ejecuta el BSP_AUDIO_OUT_Stop. Pero dentro de esa
+función, no toca los valores ni de CmdIndex ni de RepeatSatate.
+Osea, lo de antes de nuevo. Voy a volver al main y ver que onda
+
+
+Fijarme en el main.c si puedo cambiar el GPIO para que pase 
+a hacer otra cosa en lugar de solo grabar y parar.
+Creo que hay distintos tipos como AUDIO_STATE_blah blah 
+En el video que encontre, el chabon modifica la variable
+que había declarado como index
+Osea que en relacion a mi programa, la variable 
+que se cambia es la CmdIndex.
+
+Tal vez tenga que integrar una funcion al main que 
+utilice una de las funciones del CmdIndex que sea
+el pause o stop. Algun HAL_GPIO_EXIT_Callback...?
+
+---------------------------------------------------------------------------------
+
+6-10-22
+
+En el waveplayer.c dice que la variable CmdIndex está hecha para controlar
+el pllay, record o stop. La usa como variable externa que se declara en 
+main.c
+
+En realidad están relacionadas 4 variables
+CmdIndex // está en play, record o stop
+PressCount //cuenta la cantidad de veces que se presiona el boton
+PauseResumeStatus // no se que hace -Wave Player Pause/Resume Status
+RepeatState //repeat_on o repeat_off
+
+todas estan declaradas en el main.c pero se usan como externas en el waveplayer.c
+
+
+/* Defines for the Audio playing process */
+#define PAUSE_STATUS     ((uint32_t)0x00) /* Audio Player in Pause Status */
+#define RESUME_STATUS    ((uint32_t)0x01) /* Audio Player in Resume Status */
+#define IDLE_STATUS      ((uint32_t)0x02) /* Audio Player in Idle Status */
+
+#define REPEAT_ON        ((uint32_t)0x00) /* Replay Status in ON */
+#define REPEAT_OFF       ((uint32_t)0x01) /* Replay Status in OFF */
+
+367 de stm32f4_discovery_audio.c
+     HAL_GPIO_WritePin(AUDIO_RESET_GPIO, AUDIO_RESET_PIN, GPIO_PIN_RESET);
+
+----------------------------------------------------------------------------------
+31-10-22
+
+Holis
+
+En el waveplayer.c linea 307, no debería estar el CmdIndex en CMD_STOP?
+Digo porque esta leyendo y dice que si 
+
+
+Tener en cuenta esta funcion para otras opciones más adelante si no funciona
+lo que quiero hacer:
+
+void WavePlayer_CallBack(void)
+{
+  if(AppliState != APPLICATION_IDLE)
+  {
+    /* Reset the Wave player variables */
+    RepeatState = REPEAT_ON;
+    AudioPlayStart = 0;
+    LEDsState = LEDS_OFF;
+    PauseResumeStatus = RESUME_STATUS;
+    WaveDataLength =0;
+    PressCount = 0;
+    
+    /* Stop the Codec */
+    if(BSP_AUDIO_OUT_Stop(CODEC_PDWN_HW) != AUDIO_OK)
+    {
+      Error_Handler();
+    }
+    
+    /* Turn OFF LED3, LED4 and LED6 */
+    BSP_LED_Off(LED3);
+    BSP_LED_Off(LED4);
+    BSP_LED_Off(LED6);
+  }
+
+Está en el waveplayer.c linea 328
+
+Lo que veo es quee cuando entra a un case o alguna funcion, prepara
+las variables que vimos antes pero para el proximo estado.
+Por eso lo que quería probar era modificar los siguientes estados
+y agregar en el case del main.c la opcion de pausa.
+Es un bardo hacer eso. Por eso anoté la opcion anterior.
+Voy a buscar otras cosas por las dudas y desp hago eso.
+
+/**
+  * @brief  Stops playing Wave.
+  * @param  None
+  * @retval None
+  */
+void WavePlayerStop(void)
+{ 
+  BSP_AUDIO_OUT_Stop(CODEC_PDWN_HW);
+}
+
+linea 213 de waveplayer.c
+
+OK
+CONECTE LA PLACA 
+lo que sucede ahora es que aprieto una vez y empieza a grabar
+Vuelvo a apretar y se va a la pausa directamente
+Vuelvo a apretar y vuelve a grabar
+Cuando uso el botón solo me permite ir a l estado de grabación.
+Ahora, si dejo grabando los 30 segundos, una vez terminado ese tiempo
+Pasa a la repoducción automática y se escucha. Desp pasa al estado
+de espera de nuevo.
+
+Lo único que logré hasta ahora con:
+
+{cambio 473 RepeatState=REPEAT_OFF; en main.c}
+
+Fue ir al estado de pausa desp de grabar
+Pero falta que de ese estado pueda pasar a la reproducción
+
+Que hacemo??
+
+PORQUE ADEMAS EN QUE MOMENTO ENTRA A LA FUNCION DONDE ESTÁ ESA LINEA 
+EN EL HAL_GPIO_EXTI_Callback????
+
+Solo para probar algo distinto, vuelvo a poner en ON la linea 473 del main.c
+
+Ahora está todo como antes
+
+Cambio 476 CmdIndex = CMD_PLAY; del main.c
+A STOP y en el else if de 484 cambio RepeatState a OFF de 486
+y el CmdIndex de 488 lo dejo en PLAY.
+
+A verrrr
+
+Pruebo
+
+Nada, igual que siempre.
+
+Con esos cambios le agrego el de la linea 473 de REPEAT_OFF de nuevo
+para ver si de esa manera cuando para de grabar pasa a la pausa y desp
+a play...
+
+Pruebo
+
+Noup, se queda en lo mismo de grabar para grabar para, nunca reproduce
+
+Entonces vuelvo a dejar todo como estaba antes porque a pesar
+de que pase al estado de pausa desp de grabar, no sé en
+que momento entra a esa bendita funcion de Hal gpio exti callbck
+Y para meter mano donde no se que pasa, pues no gracias.
+
+
+Por lo que vi lo que voy a hacer es crear un nuevo estado en el case del 
+main.c y luego entrar tanto al waverecorder.c como al 
+waveplayer.c para que tengan en cuenta las modificaciones para el 
+nuevo estado del programa ppal y probar.
+
+Entonces, {graba - pausa - reproduce - pausa}
+MAIN.C
+
+Agrego en el switch del COMMAND_AudioExecuteApplication el caso
+para el cual se puede dar que CmdIndex esté en CMD_STOP.
+
+case CMD_STOP:
+	if (RepeatState == REPEAT_OFF)//gancho entre los otros dos estados para poder entrar
+		{if (AudioPlayStart==1){
+		WavePlayerStop();
+		//RepeatState=REPEAT_ON?}
+		
+		elseif (WaveRecStatus == 1){
+		WaveRecorderStop();
+		//RepeatState=ON;}
+		}
+break;
+
+Para el primer if utilizo una condicion que sea para ambos estados (grabar
+y reproducir) porque la pausa sería un estado consecutivo de ambos.
+Para el segundo if tengo que buscar una condición que cumpla solo
+una o la otra. Para player puede ser AudioPlayStart=1, y para el
+recorder puede ser WaveRecStatus=1.
+Por último tengo que preparar el estado CmdIndex para el proximo estado, pero
+dentro de waverecorder y waveplayer respectivamente.
+Para el main.c tal vez hacer lo mismo pero utilizando la variable del Repeat.
+
+Tal vez también tenga que cambiar la linea 476 y ...
+Aunque no sepa en que momento entra a esa función, que por lo que huelo no
+es que entre a la función sino que de alguna exttraña manera entra en el
+recorrido de la lectura del código, en fin, voy a tener que modificar 
+también HAL_GPIO_EXTI_Callback.
+
+L476---> CmdIndex = CMD_STOP;
+L482---> CmdIndex = CMD_STOP;
+L488---> if (AudioPlayStart==1){ CmdIndex = CMD_RECORD} elseif (WaveRecStatus == 1) {CmdIndex = CMD_PLAY;}
+
+
+Que onda con esto?
+
+if(GPIO_Pin == GPIO_PIN_1) 
+  {
+    if (PressCount == 1)//si es la segunda vez que se aprieta sería?
+    {
+      /* Resume playing Wave status */
+      PauseResumeStatus = RESUME_STATUS;
+      PressCount = 0;
+    }
+    else
+    {
+      /* Pause playing Wave status */
+      PauseResumeStatus = PAUSE_STATUS;
+      PressCount = 1;
+    }
+  }
+
+----------------------------------------------------------------------------
+1/11/22
+
+Holiwiiiiiis, hemos vuelto. En el capitulo de hoy, COMO HACER EXPLOTAR TU CEREBRO :)
+
