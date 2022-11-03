@@ -404,21 +404,35 @@ case CMD_STOP:
 	if (RepeatState == REPEAT_OFF)//gancho entre los otros dos estados para poder entrar
 		{if (AudioPlayStart==1){
 		WavePlayerStop();
-		//RepeatState=REPEAT_ON?}
+		//RepeatState=REPEAT_ON?}//no es necesario creo
+		
 		
 		elseif (WaveRecStatus == 1){
 		WaveRecorderStop();
-		//RepeatState=ON;}
+		//RepeatState=REPEAT_ON;}//para que de verdadero el if de CMD_PLAY
 		}
 break;
+
 
 Para el primer if utilizo una condicion que sea para ambos estados (grabar
 y reproducir) porque la pausa sería un estado consecutivo de ambos.
 Para el segundo if tengo que buscar una condición que cumpla solo
 una o la otra. Para player puede ser AudioPlayStart=1, y para el
 recorder puede ser WaveRecStatus=1.
+Para que en el main.c pueda leer esas variables las tengo que declarar
+como:
+extern uint32_t WaveRecStatus;
+extern uint32_t AudioPlayStart;
+
 Por último tengo que preparar el estado CmdIndex para el proximo estado, pero
 dentro de waverecorder y waveplayer respectivamente.
+Por ejempo linea 180 en waverecorder.c --->CMD_STOP;
+y creo que tambien la ultima linea de la funcion de grabacion:
+L211--->  CmdIndex = CMD_PLAY; a CMD_STOP;
+!El waverecorder no utiliza la variable global RepeatState!
+Por eso la setes en el case del main.c, en este caso la modificaría a
+REPEAT_OFF;(L243 main.c)
+
 Para el main.c tal vez hacer lo mismo pero utilizando la variable del Repeat.
 
 Tal vez también tenga que cambiar la linea 476 y ...
@@ -454,4 +468,39 @@ if(GPIO_Pin == GPIO_PIN_1)
 1/11/22
 
 Holiwiiiiiis, hemos vuelto. En el capitulo de hoy, COMO HACER EXPLOTAR TU CEREBRO :)
+
+Esuve anotando un monton de cosas en los apuntes de ayer.
+Pero voy a escribir acá para no marearme...más.
+
+Dentro del waverecorder tengo que especificar el cmd_index en STOP para que 
+despues me entre al case de STOP del main.c
+Pero además tengo que poner cmd_index en PLAY una vez que entre a la 
+subfuncion de WaveRecorderStop, para que una vez que se haya pausado
+pueda ir al estado de play y no se quede ahí.
+
+L106*--- CmdIndex=CMD_PLAY; //linea nueva;
+
+Ahora hago el recorrido de CMD_STOP luego de haber pausado la grabacion
+y pasar a CMD PLAY.
+
+Tendría que agregar al case de PLAY un:
+RepeatState = REPEAT_OFF; Para que entre al primer if de STOP.
+
+Dentro del waveplayer.c creo que debería cambiar la L307 a CmdIndex=CMD_STOP;
+y dentro de la función WavePlayBack también, pero en realidad nunca la modifica
+porque como la unica condicion para que no entre al play 
+es la del IF de repeat ON, entonces solo modifica esa variable.
+Entonces tendría que agregarle al final una linea modificando el CmdIndex a STOP
+para que entre al Stop.
+
+En el case del main.c para PLAY debería agregarle que esté en Repeat off
+para que entre al if del case de STOP.
+
+
+desp en mi case de STOP debería agregarle
+//CmdIndex=CMD_RECORD;
+o como hice para el caso anterior, agregarle a la función WavePlayerStop
+
+un L220* ---CmdIndex=CMD_RECORD;
+
 
