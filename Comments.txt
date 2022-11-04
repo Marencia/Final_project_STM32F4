@@ -549,3 +549,52 @@ estado previo de PLAY.
 me fui a dormir, chau. 
 
 Igual volví a dejar todo como estaba antes por las dudas :3
+
+Probar comentar linea 188 de waveplayer.c
+presscount tal vez se pueda utilizar como variable para
+evaluar si el estado anterior era el de reproducción.
+
+Nuevo posible case
+
+case CMD_STOP:
+	if (RepeatState==REPEAT_ON) 
+	{
+	WaveRecorderStop();
+	RepeatState=on
+	CmdIndex=CMD_PLAY;
+	}
+
+	else if (RepeatState==REPEAT_OFF)
+	{
+	WavePlayerStop();
+	RepeatState=;
+	}
+
+
+Si hago eso, cuando vuelva a presionar el botón de usuario, al estar
+el CmdIndex en PLAY, el HAL GPIO lo va a pasar a STOP de nuevo
+y no va a salir
+
+Por lo tanto en el main, el case quedaría:
+
+case CMD_STOP:
+	if (RepeatState==REPEAT_ON)
+	{
+	WaverRecorderStop();}
+
+	else if ((RepeatState==REPEAT_ON) and (AudioPlayStart==1)){
+	WavePlayerStop();
+	RepeatState=REPEAT=OFF;}
+
+Por lo tanto lo que voy a modificar son las lineas a partir de 484 de main.c
+
+else if (CmdIndex == CMD_STOP)
+{if (RepeatState==REPEAT_ON){
+CmdIndex=CMD_PLAY;
+}
+else if (RepeatState==REPEAT_OFF)
+{
+CmdIndex=CMD_RECORD;
+}
+ 
+ Eso ultimo no lo probé pero espero que funcione :)
