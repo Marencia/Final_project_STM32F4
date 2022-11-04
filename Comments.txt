@@ -503,4 +503,49 @@ o como hice para el caso anterior, agregarle a la función WavePlayerStop
 
 un L220* ---CmdIndex=CMD_RECORD;
 
+*******************************************************************************
 
+4-11-22
+
+Hoy evitaremos preguntas como: Que estoy haciendo? y Por qué elegí esto?
+
+A continuación, un resumen de todas las modificaciones que haríamos:
+
+MAIN.C
+agrego:
+
+case CMD_STOP:
+	if (RepeatState == REPEAT_OFF)//gancho entre los otros dos estados para poder entrar
+		{if (AudioPlayStart==1){
+		WavePlayerStop();}
+		//RepeatState=REPEAT_ON?}//no es necesario creo
+		
+		
+		elseif (WaveRecStatus == 1){
+		WaveRecorderStop();
+		RepeatState=REPEAT_ON;}//para que de verdadero el if de CMD_PLAY
+		}
+break;
+
+Modifico:
+L491--->CMD_PLAY --->CMD_STOP;
+L488--->RepeatState=REPEAT_ON --->REPEAT_OFF;
+L497--->CMD_RECORD--->CMD_STOP;
+
+Comenté:
+L499-L504
+
+Agregué:
+L36 ---> extern uint8_t WaveRecStatus;
+
+De esta manera la primera vez: graba, pausa, reproduce, pausa.
+Pero después, solo entra al estado de grabación. Además sigue pasando
+de que si despues de los 30 seg de grabación no se apreta el botón,
+pasa automaticamente a reproducir.
+Y cuando reproduzco lo que grabé la primera vez y lo pongo en pausa,
+pasa directo a grabar. Como si nunca entrara al STOP que viene del
+estado previo de PLAY.
+
+me fui a dormir, chau. 
+
+Igual volví a dejar todo como estaba antes por las dudas :3
