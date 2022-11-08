@@ -747,3 +747,14 @@ pulsador. Pero no es mi culpa. Que conste.
 
 Ahora sí, me fuí a buscar Memento por Cuevana jajaj
 
+Cuando lo volví a hacer funcionar, se trababa en la repoducción
+y luego de unos intentos se activa el led rojo.
+
+Voy a probar crear una variable nueva en waveplayer y utilizar eso
+para el condicional del case del main.c, exportando la variable
+como externa.
+
+_IO uint32_t Variable_de_estado = 0;
+
+Lo dejé como estaba, sigue haciendo el mismo problema, no sé que cambió.
+Desp lo veo.
