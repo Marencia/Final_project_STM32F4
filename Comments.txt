@@ -598,3 +598,37 @@ CmdIndex=CMD_RECORD;
 }
  
  Eso ultimo no lo probé pero espero que funcione :)
+
+******************************************************************************
+8-11-22
+
+Hoy voy a probar lo que escribí antes, habiendo hecho un repaso general para 
+no meter la pata. Si llega a funcionar todo como lo pensé, paso a cambiar
+lo de los 30seg de grabación y rep automática.
+
+No, no ví Memento porque no estaba en Netflix jajaj lol pero lo haré
+
+En fin, prosigamos.
+
+
+Primero, no sé porque las lineas están defasadas en 15. Osea a todo
+lo que escribí antes le tengo que restar 15 para saber en que linea actual
+estoy. Meh. Debí haber escrito algo y no me acuerdo.
+
+Bien
+
+tengo que copiar en el main.c el case de COMMAND_AudioExecuteApplication(void)
+nuevo y modificar ek else if de stop de la interrupción .
+Además debo modificar, dentro de la interrupción, para cada CmdIndex
+el estado siguiente. Es decir, para CMD_RECORD y CMD_PLAYA, el estado
+siguiente deberá ser CMD_STOP.
+
+No hizo nada, funciona como al principio.
+Me voy a fijar como terminan las variables dentro del wave recorder y play.
+Modificaría la 180 PLAY y 211 PLAY de waverecorder a CMD_STOP;
+Cambio de waveplayer la linea 307, de CMD_RECORD a CMD_STOP.//esto lo volvi 
+para atrás
+
+FUNCIONA
+
+Me fui a ser feliz. Bye.
