@@ -632,3 +632,118 @@ para atrás
 FUNCIONA
 
 Me fui a ser feliz. Bye.
+
+Como quedó el main. c posta
+
+static void COMMAND_AudioExecuteApplication(void)
+{
+  /* Execute the command switch the command index */
+  switch (CmdIndex)
+  {
+    /* Start Playing from USB Flash memory */
+  case CMD_PLAY:
+    if (RepeatState == REPEAT_ON)
+      WavePlayerStart();//es a lo primero que entra a porque cmdindex esta inicializado en play y repeat en on
+    break;
+    
+    /*Agrego estas lineas para probar si se detiene cuando termino de grabar*/
+//  case CMD_STOP:
+	//  RepeatState = REPEAT_ON;
+	 // WaveRecorderStop();
+	  //WavePlayerStop();//esto tal vez no vaya
+	  //break;
+
+  case CMD_STOP:
+  	if (RepeatState==REPEAT_ON)
+  	{
+  	WaveRecorderStop();
+  	}
+
+  	else if ((RepeatState==REPEAT_ON) && (AudioPlayStart==1)){
+  	WavePlayerStop();
+  	RepeatState = REPEAT_OFF;
+  	}
+  break;
+
+    /* Start Recording in USB Flash memory */ 
+  case CMD_RECORD:
+    RepeatState = REPEAT_ON;
+    WaveRecorderProcess();
+    break;
+
+  default:
+    break;
+  }
+
+y en la interrupción
+
+474 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) //EN QUE MOMENTO DE LA VIDA ENTRA A ESTA FUNCION?!
+{
+  if(GPIO_Pin == GPIO_PIN_0) 
+  {
+    if (PbPressCheck == 0)
+    {
+      HAL_Delay(10);
+
+      /* Test on the command: Recording */
+      if (CmdIndex == CMD_RECORD)
+      {
+        RepeatState = REPEAT_ON;
+        //a partir de acá es donde creo que debería cambiar, porque no quiero que pase automaticamente al estado de repoducción
+        /* Switch to Play command */
+        CmdIndex = CMD_STOP;
+      }
+      /* Test on the command: Playing */
+      else if (CmdIndex == CMD_PLAY)
+      {
+        /* Switch to Record command */
+        CmdIndex = CMD_STOP;
+      }
+      /*else if (CmdIndex == CMD_STOP)
+      {
+        RepeatState = REPEAT_ON;//tal vez lo cambie
+        // Default Command Index: Play command
+        CmdIndex = CMD_PLAY;
+      }*/
+
+      else if (CmdIndex == CMD_STOP)
+      {
+    	  if (RepeatState==REPEAT_ON){
+    		  CmdIndex=CMD_PLAY;
+    	  }
+
+		  else if (RepeatState==REPEAT_OFF){
+			  CmdIndex=CMD_RECORD;
+		  }
+      }
+      PbPressCheck = 1;
+    }
+    else
+    {
+      PbPressCheck = 0;
+    }
+  }
+  
+  if(GPIO_Pin == GPIO_PIN_1) 
+  {
+    if (PressCount == 1)//si es la segunda vez que se aprieta sería?
+    {
+      /* Resume playing Wave status */
+      PauseResumeStatus = RESUME_STATUS;
+      PressCount = 0;
+    }
+    else
+    {
+      /* Pause playing Wave status */
+      PauseResumeStatus = PAUSE_STATUS;
+      PressCount = 1;
+    }
+  }
+536 } 
+
+
+Lo unico que sigue funcionando asquerosamente es el rebote mal hecho del
+pulsador. Pero no es mi culpa. Que conste.
+
+Ahora sí, me fuí a buscar Memento por Cuevana jajaj
+
