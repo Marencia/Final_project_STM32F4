@@ -745,7 +745,6 @@ y en la interrupción
 Lo unico que sigue funcionando asquerosamente es el rebote mal hecho del
 pulsador. Pero no es mi culpa. Que conste.
 
-Ahora sí, me fuí a buscar Memento por Cuevana jajaj
 
 Cuando lo volví a hacer funcionar, se trababa en la repoducción
 y luego de unos intentos se activa el led rojo.
