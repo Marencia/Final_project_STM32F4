@@ -1,7 +1,7 @@
 En el waveplayer se encuentra el PLAY_REPEAT_DISABLED
 que es la funcion que detiene el loop en el main.h
 
-en waveplayer:
+en waveplayer
 
 #ifdef PLAY_REPEAT_DISABLED 
   RepeatState = REPEAT_OFF;
@@ -757,3 +757,148 @@ _IO uint32_t Variable_de_estado = 0;
 
 Lo dejé como estaba, sigue haciendo el mismo problema, no sé que cambió.
 Desp lo veo.
+
+**************************************************************************
+10/11/22
+
+Hoy con el profesor vimos un par de cosas.
+
+Después de lograr que grabe-pare-reproduzca-pare y vuelva a arrancar,
+tengo que mejorar el tema del rebote.
+
+Como lo hacemos?
+
+Utilizando la interrupción del SysTickHook, dentro de el voy a copiar
+lo del control de estados y el gpio.
+Hay que bloquear la interrupción por el botón de usuario
+Hay que pasar como parametro igualado a cero el Button_mode_exti
+dentro del BSP_pb_INIT
+
+Después vamos a trabajar en el teclado matricial. Pero por ahora me 
+concentro en lo de la interriupicuion
+
+en main.c
+L115 cambio BUTTON_MODE_EXTI por 0;
+
+agrego en L22 #include "SysTick.h"
+
+NO TIENE EN LA BIBLIOTECA EL SYSTICK.H, al cabo que ni quería. 
+
+L28 agrego #define SYSTICK_FREQ_HZ 1000
+
+***************************************************************************
+17/11/22
+
+Copie en la carpeta de scr el systick.c y en la de inc copie la
+systick.h y commonio.h
+
+Funcionó, ahora no me salta error cuando tiene que definir systick
+
+en L 92 de main.c agregué SysTick_Init (SYSTICK_FREQ_HZ);
+
+Lo que uso para el systickhook de los trabajos anteriores.
+
+void SysTickHook (void) // Para colgarse del System Tick
+{	static uint8_t contador=0, contador_f=0;
+
+	// Control de SW1
+	static uint8_t cambiar_estado, cambiar_estado_f;//reemplaza el while de gancho
+
+
+	if((!HAL_GPIO_ReadPin (GPIOA, SW1))){
+		contador++;
+
+			if (!HAL_GPIO_ReadPin (GPIOA, SW1) && (contador==30) && (cambiar_estado)){
+					cambiar_estado=0;
+					modo_AUDIO = !modo_AUDIO;
+
+					if(modo_AUDIO==PLAY){
+					HAL_GPIO_WritePin(GPIOD, LED_ROJO_A, GPIO_PIN_RESET);
+					HAL_GPIO_WritePin(GPIOD, LED_VERDE_A, GPIO_PIN_SET);
+					}
+					else{
+						HAL_GPIO_WritePin(GPIOD, LED_ROJO_A, GPIO_PIN_SET);
+						HAL_GPIO_WritePin(GPIOD, LED_VERDE_A, GPIO_PIN_RESET);
+					}
+					contador=0;
+
+	}}
+	else{
+		cambiar_estado=1;
+
+	}
+
+
+******************************************************************************
+18/11/22
+
+Voy a sacar el HAL_Delay de HAL_GPIO_EXTI_Callback
+Y voy a meter todo lo que está ahí, en el Systickhook.
+Ademas tengo que crear las variables cambiar estado y contador.
+
+Quedaría así:
+
+
+void SysTickHook (void) // Para colgarse del System Tick
+{static uint8_t contador=0; 
+ static uint8_t cambiar_estado;
+
+  if(GPIO_Pin == GPIO_PIN_0) 
+  {contador++;
+    if (PbPressCheck == 0)
+    {
+	if((GPIO_Pin == GPIO_PIN_0) && (contador==30) && (cambiar_estado)){
+		cambiar_estado=0;
+
+      /* Test on the command: Recording */
+      if (CmdIndex == CMD_RECORD)
+      {
+        RepeatState = REPEAT_ON;
+        //a partir de acá es donde creo que debería cambiar, porque no quiero que pase automaticamente al estado de repoducción
+        /* Switch to Play command */
+        CmdIndex = CMD_STOP;
+      }
+      /* Test on the command: Playing */
+      else if (CmdIndex == CMD_PLAY)
+      {
+        /* Switch to Record command */
+        CmdIndex = CMD_STOP;
+      }
+
+      else if (CmdIndex == CMD_STOP)
+      {
+    	  if (RepeatState==REPEAT_ON){
+    		  CmdIndex=CMD_PLAY;
+    	  }
+
+		  else if (RepeatState==REPEAT_OFF){
+			  CmdIndex=CMD_RECORD;
+		  }
+      }
+      PbPressCheck = 1;
+    }
+	contador=0;
+}
+    else
+    {
+      PbPressCheck = 0;
+    }
+  }
+  
+  if(GPIO_Pin == GPIO_PIN_1) 
+  {
+    if (PressCount == 1)//si es la segunda vez que se aprieta sería?
+    {
+      /* Resume playing Wave status */
+      PauseResumeStatus = RESUME_STATUS;
+      PressCount = 0;
+    }
+    else
+    {
+      /* Pause playing Wave status */
+      PauseResumeStatus = PAUSE_STATUS;
+      PressCount = 1;
+    }
+  }
+} 
+
