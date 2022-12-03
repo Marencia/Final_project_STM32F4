@@ -1,7 +1,7 @@
 En el waveplayer se encuentra el PLAY_REPEAT_DISABLED
 que es la funcion que detiene el loop en el main.h
 
-en waveplayer
+en waveplayer:
 
 #ifdef PLAY_REPEAT_DISABLED 
   RepeatState = REPEAT_OFF;
@@ -387,6 +387,10 @@ Entonces vuelvo a dejar todo como estaba antes porque a pesar
 de que pase al estado de pausa desp de grabar, no sé en
 que momento entra a esa bendita funcion de Hal gpio exti callbck
 Y para meter mano donde no se que pasa, pues no gracias.
+//Lo que pasaba es que el HAL_GPIO_EXTI_Callback es una interrupción
+y No entraba en reproducción porque en la linea 473, el RepeatState
+tomaba el valor de Repeat_Off que no permitia entrar al if de PLAY
+de COMMAND_AudioExecuteApplication(void). De nada.
 
 
 Por lo que vi lo que voy a hacer es crear un nuevo estado en el case del 
@@ -518,7 +522,7 @@ case CMD_STOP:
 	if (RepeatState == REPEAT_OFF)//gancho entre los otros dos estados para poder entrar
 		{if (AudioPlayStart==1){
 		WavePlayerStop();}
-		//RepeatState=REPEAT_ON?}//no es necesario creo
+		//RepeatState=REPEAT_OFF?}//no es necesario creo
 		
 		
 		elseif (WaveRecStatus == 1){
@@ -580,11 +584,12 @@ Por lo tanto en el main, el case quedaría:
 case CMD_STOP:
 	if (RepeatState==REPEAT_ON)
 	{
-	WaverRecorderStop();}
+	WaveRecorderStop();}
 
-	else if ((RepeatState==REPEAT_ON) and (AudioPlayStart==1)){
+	else if ((RepeatState==REPEAT_ON) && (AudioPlayStart==1)){
 	WavePlayerStop();
-	RepeatState=REPEAT=OFF;}
+	RepeatState=REPEAT_OFF;}
+break;
 
 Por lo tanto lo que voy a modificar son las lineas a partir de 484 de main.c
 
@@ -597,8 +602,6 @@ else if (RepeatState==REPEAT_OFF)
 CmdIndex=CMD_RECORD;
 }
  
- Eso ultimo no lo probé pero espero que funcione :)
-
 ******************************************************************************
 8-11-22
 
@@ -625,11 +628,12 @@ siguiente deberá ser CMD_STOP.
 
 No hizo nada, funciona como al principio.
 Me voy a fijar como terminan las variables dentro del wave recorder y play.
-Modificaría la 180 PLAY y 211 PLAY de waverecorder a CMD_STOP;
+Modificaría la 180 PLAY y 211 PLAY de waverecorder a CMD_STOP;//lito
+
 Cambio de waveplayer la linea 307, de CMD_RECORD a CMD_STOP.//esto lo volvi 
 para atrás
 
-FUNCIONA
+FUNCIONA (Estaba mal acomodada una llave en el case tmb jeje)
 
 Me fui a ser feliz. Bye.
 
@@ -745,6 +749,8 @@ y en la interrupción
 Lo unico que sigue funcionando asquerosamente es el rebote mal hecho del
 pulsador. Pero no es mi culpa. Que conste.
 
+Ahora sí, me fuí a buscar Memento por Cuevana jajaj
+
 
 Cuando lo volví a hacer funcionar, se trababa en la repoducción
 y luego de unos intentos se activa el led rojo.
@@ -839,7 +845,7 @@ Ademas tengo que crear las variables cambiar estado y contador.
 Quedaría así:
 
 
-void SysTickHook (void) // Para colgarse del System Tick
+void SysTickHook (uint16_t GPIO_Pin) // Para colgarse del System Tick
 {static uint8_t contador=0; 
  static uint8_t cambiar_estado;
 
@@ -901,4 +907,89 @@ void SysTickHook (void) // Para colgarse del System Tick
     }
   }
 } 
+
+*******************************************************************************
+26/11/22
+
+Comento de la linea 474 a la 536 del main.c para copiar la interrupción
+del sistickhook
+
+Agrego lineas de 537 a la 598 en el main.c
+
+Cambio:
+
+void SysTickHook (void) // Para colgarse del System Tick
+{static uint8_t contador=0;
+ static uint8_t cambiar_estado;
+ uint16_t GPIO_Pin;
+
+SysTick_Init (SYSTICK_FREQ_HZ);
+
+
+Me tira error en la linea 92 del main.c por eso...
+
+Agrego en stm32f4_discovery.c
+
+lineas 188 a 194
+
+/**
+ * Creo una funcion vacia de sistick
+ */
+
+void SysTick_Init(uint16_t Frec_Ticks_Hz){
+	SysTick_Config (SystemCoreClock / Frec_Ticks_Hz);
+}
+
+(SystemCoreClock
+//If you use this function to configure the system clock; then there
+               is no need to call the 2 first functions listed above, since SystemCoreClock
+               variable is updated automatically.
+
+y linea
+
+38  #include "SysTick.h"
+
+Puerbo
+
+No funciona
+
+Agrego lines 209 a 213 en stm32f4_discovery.c por las dudas
+
+lo saco
+
+Descomento lo de main.c y vuelvo a dejar la funcion de HAL
+Comento lo de systickhook
+
+
+Volví a dejar   BSP_PB_Init(BUTTON_KEY, BUTTON_MODE_EXTI); 
+despues debería volver a ponerlo en cero para usar el systick
+
+Si, funciona como antes.
+
+Lo vuelvo a poner en cero (linea 115)
+
+Lo cambio de nuevo
+Voy a ponerlo como BUTTON_MODE_GPIO para que lo configure como entrada 
+pero no parahablitar la interrupcion
+Y vuelvo a descomentar el systick y a comentar el HAL de main.c
+
+no me reconoce el boton de usuario
+Lo aprieto y no hace nada
+
+Me tira errores en las variables que declaro dentro del SystickHook
+
+Tanto para GPIO_Pin como para contador y cambiar_estado
+
+Lo dejo así funcionando mal para verlo después.
+
+*****************************************************************************
+2/12/22
+
+Voy a probar el programa de nuevo pero esta vez voy a sacar todo lo 
+que puse antes y voy a dejarlo como cuando funcionaba.
+Después voy a agregar el Systick pero con una función simple 
+para saber si está entrando o no.
+
+Es mas o menos lo mismo, pero así puedo guiarme mejor con qué es
+lo que no funciona.
 
