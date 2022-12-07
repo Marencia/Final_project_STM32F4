@@ -16,7 +16,7 @@ extern __IO uint32_t CmdIndex;
 void SysTick_Handler (void)
 {
 	HAL_IncTick();	//Incrementa Tick del sistema (usado por algunas funciones de HAL Driver)
-	SysTickHook (); // Función para colgarse de la interrupción del System Tick
+	SysTickHook (); // Función para colgarse de la interrupción del System Tick //y acá tendria que agregar GPIO_Pin
 	/* Test on the command: Recording */
 	  if (CmdIndex == 1)
 	  {
