@@ -13,11 +13,11 @@
   * SLA0044, the "License"; You may not use this file except in compliance with
   * the License. You may obtain a copy of the License at:
   *                             www.st.com/SLA0044
-  *
   ******************************************************************************
   */ 
-
 /* Includes ------------------------------------------------------------------*/
+#include "Entradas.h"
+#include "Salidas.h"
 #include "main.h"
 #include "SysTick.h"
 /* Private typedef -----------------------------------------------------------*/
@@ -31,7 +31,7 @@ __IO uint32_t PressCount = 0;
 
 /* Wave Player Pause/Resume Status. Defined as external in waveplayer.c file */
 __IO uint32_t PauseResumeStatus = IDLE_STATUS;   
-                                                   
+
 extern uint32_t AudioPlayStart;
 extern uint32_t Variable_de_estado;
 /* Re-play Wave file status on/off.
@@ -47,7 +47,7 @@ extern __IO uint32_t LEDsState;
 /* Save MEMS ID */
 uint8_t MemsID = 0; 
 
-__IO uint32_t CmdIndex = CMD_PLAY; 		//__IO uint8_t                      is_connected; // includes information about the device connection state.
+__IO uint32_t CmdIndex = CMD_PLAY; 		//__IO uint8_t
 __IO uint32_t PbPressCheck = 0;
 
 FATFS USBDISKFatFs;          /* File system object for USB disk logical drive */
@@ -106,13 +106,18 @@ int main(void)
   TIM_LED_Config();
   
   /* Initialize the Repeat state */
-  RepeatState = REPEAT_ON;//lo cambiaría a REPEAT_OFF;
+  RepeatState = REPEAT_ON;
   
   /* Turn OFF all LEDs */
   LEDsState = LEDS_OFF;
   
   /* Configure USER Button */
-//  BSP_PB_Init(BUTTON_KEY, BUTTON_MODE_EXTI);
+ // BSP_PB_Init(BUTTON_KEY, BUTTON_MODE_GPIO);
+  /*Nueva configuracion*/
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+  In_Init(GPIOA, Blue_button, 1);
+  In_Init(GPIOC, SEL_MUX_0, 1);
   
   /*##-1- Link the USB Host disk I/O driver ##################################*/
   if(FATFS_LinkDriver(&USBH_Driver, USBDISKPath) == 0)
@@ -129,7 +134,7 @@ int main(void)
     /* Run Application (Blocking mode)*/
     while (1)
     {
-      switch(AppliState)
+    	switch(AppliState)
       {
       case APPLICATION_START:
         MSC_Application();
@@ -536,15 +541,15 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
 //}
 void SysTickHook (void) // Para colgarse del System Tick
 
-{static uint8_t prueba=1;
+{ static uint8_t prueba=1;
  static uint8_t contador=0;
  static uint8_t cambiar_estado;
- uint16_t GPIO_Pin;
-  if(GPIO_Pin == GPIO_PIN_0)
+
+  if(!HAL_GPIO_ReadPin (GPIOA, Blue_button))
   {contador++;
     if (PbPressCheck == 0)
     {
-	if((GPIO_Pin == GPIO_PIN_0) && (contador==30) && (cambiar_estado)){
+	if(!HAL_GPIO_ReadPin (GPIOA, Blue_button) && (contador==30) && (cambiar_estado)){
 		cambiar_estado=0;
 
       /* Test on the command: Recording */
@@ -582,7 +587,7 @@ void SysTickHook (void) // Para colgarse del System Tick
     }
   }
 
-  if(GPIO_Pin == GPIO_PIN_1)
+  if(!HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_1))//No se cual es el GPIO_PIN_1 en el CommonIO.h, es del accelerometro!! Fijarme si sacandolo funciona igual
   {
     if (PressCount == 1)//si es la segunda vez que se aprieta sería?
     {
@@ -597,6 +602,7 @@ void SysTickHook (void) // Para colgarse del System Tick
       PressCount = 1;
     }
   }
+
   prueba++;
 }
 #ifdef USE_FULL_ASSERT
