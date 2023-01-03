@@ -476,94 +476,29 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
   * @param  GPIO_Pin: Specifies the pins connected EXTI line
   * @retval None
   */
-//void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) //EN QUE MOMENTO DE LA VIDA ENTRA A ESTA FUNCION?!
-//{
-//  if(GPIO_Pin == GPIO_PIN_0)
-//  {
-//    if (PbPressCheck == 0)
-//    {
-//      HAL_Delay(10);
-//
-//      /* Test on the command: Recording */
-//      if (CmdIndex == CMD_RECORD)
-//      {
-//        RepeatState = REPEAT_ON;
-//        //a partir de acá es donde creo que debería cambiar, porque no quiero que pase automaticamente al estado de repoducción
-//        /* Switch to Play command */
-//        CmdIndex = CMD_STOP;
-//      }
-//      /* Test on the command: Playing */
-//      else if (CmdIndex == CMD_PLAY)
-//      {
-//        /* Switch to Record command */
-//        CmdIndex = CMD_STOP;
-//      }
-//      /*else if (CmdIndex == CMD_STOP)
-//      {
-//        RepeatState = REPEAT_ON;//tal vez lo cambie
-//        // Default Command Index: Play command
-//        CmdIndex = CMD_PLAY;
-//      }*/
-//
-//      else if (CmdIndex == CMD_STOP)
-//      {
-//    	  if (RepeatState==REPEAT_ON){
-//    		  CmdIndex=CMD_PLAY;
-//    	  }
-//
-//		  else if (RepeatState==REPEAT_OFF){
-//			  CmdIndex=CMD_RECORD;
-//		  }
-//      }
-//      PbPressCheck = 1;
-//    }
-//    else
-//    {
-//      PbPressCheck = 0;
-//    }
-//  }
-//
-//  if(GPIO_Pin == GPIO_PIN_1)
-//  {
-//    if (PressCount == 1)//si es la segunda vez que se aprieta sería?
-//    {
-//      /* Resume playing Wave status */
-//      PauseResumeStatus = RESUME_STATUS;
-//      PressCount = 0;
-//    }
-//    else
-//    {
-//      /* Pause playing Wave status */
-//      PauseResumeStatus = PAUSE_STATUS;
-//      PressCount = 1;
-//    }
-//  }
-//}
 void SysTickHook (void) // Para colgarse del System Tick
 
-{ static uint8_t prueba=1;
- static uint8_t contador=0;
- static uint8_t cambiar_estado;
+{
+ static uint32_t contador=0;
+ static uint32_t cambiar_estado;
 
-  if(!HAL_GPIO_ReadPin (GPIOA, Blue_button))
+  if(HAL_GPIO_ReadPin (GPIOA, Blue_button))
   {contador++;
-    if (PbPressCheck == 0)
-    {
-	if(!HAL_GPIO_ReadPin (GPIOA, Blue_button) && (contador==30) && (cambiar_estado)){
+
+
+	if(HAL_GPIO_ReadPin (GPIOA, Blue_button) && (contador>=30) && (cambiar_estado==1)){
 		cambiar_estado=0;
 
-      /* Test on the command: Recording */
       if (CmdIndex == CMD_RECORD)
       {
         RepeatState = REPEAT_ON;
 
-        /* Switch to Play command */
+
         CmdIndex = CMD_STOP;
       }
-      /* Test on the command: Playing */
+
       else if (CmdIndex == CMD_PLAY)
       {
-        /* Switch to Record command */
         CmdIndex = CMD_STOP;
       }
 
@@ -571,39 +506,25 @@ void SysTickHook (void) // Para colgarse del System Tick
       {
     	  if (RepeatState==REPEAT_ON){
     		  CmdIndex=CMD_PLAY;
+    		  BSP_LED_Off(LED5);
     	  }
 
 		  else if (RepeatState==REPEAT_OFF){
 			  CmdIndex=CMD_RECORD;
+			  BSP_LED_On(LED5);
 		  }
       }
-      PbPressCheck = 1;
+      contador=0;
+
     }
-	contador=0;
-}
-    else
-    {
-      PbPressCheck = 0;
-    }
+
   }
 
-  if(!HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_1))//No se cual es el GPIO_PIN_1 en el CommonIO.h, es del accelerometro!! Fijarme si sacandolo funciona igual
-  {
-    if (PressCount == 1)//si es la segunda vez que se aprieta sería?
-    {
-      /* Resume playing Wave status */
-      PauseResumeStatus = RESUME_STATUS;
-      PressCount = 0;
-    }
-    else
-    {
-      /* Pause playing Wave status */
-      PauseResumeStatus = PAUSE_STATUS;
-      PressCount = 1;
-    }
-  }
+ else{
+ 		cambiar_estado=1;
 
-  prueba++;
+ 	}
+
 }
 #ifdef USE_FULL_ASSERT
 
