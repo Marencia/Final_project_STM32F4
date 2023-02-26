@@ -2454,3 +2454,103 @@ El unico problema es la columna 4.
 Trabajaré solo con eso.
 
 AVERRRRRRR
+
+
+
+Los controles para grabar y respoducir andan mal
+Cuando termina de reproducir todo 
+que encima no se escucha nada
+no va al stop
+
+y hay como mucho rebote pero no creo que sea algo de
+los pulasodres
+Sino mas bien
+que estan tomando varios valores al mismo tiempo los
+CmdIndex y RepeatState
+
+Bueno, anduvo perfecto col boton S1
+sin rebotes
+
+pruebo con el S2
+
+Se buguea MAL
+
+Voy a probar asignandole otro archivo al pulsador S2
+
+Cambie esto en waverecorder.c
+
+ /* Remove Wave file if it exists on USB Flash Disk *///Esto en realidad no quiero que lo haga
+  //f_unlink (REC_WAVE_NAME);//esto no estaba comentado antes
+  
+  /* Open the file to write on it */
+  if ((AppliState == APPLICATION_IDLE) || (f_open(&WavFile, REC_WAVE_NAME_1//acá le agregue el _1//, FA_CREATE_ALWAYS | FA_WRITE) != FR_OK))
+  {   
+
+
+reproduccion en waveplayer
+
+  */
+void WavePlayerStart(void)
+{
+  UINT bytesread = 0; //cantidad de bytes leidos
+  char path[] = "1:/"; //archivo de lectura esto era 0:// lo volví a dejar así
+
+
+y dos lineas + abajo esto
+  /* Get the read out protection status */
+  if(f_opendir(&Directory, path) == FR_OK)
+  {
+    if(WaveRecStatus == 1)
+    {
+      wavefilename = REC_WAVE_NAME_1;
+    }
+    else
+
+
+Bueno
+
+Hay una funcion que me borra la grabacion anterior
+Y no es f_unlink porqu eesa la comente y lo hizo igual
+
+A no ser que haya sido por sobreescribir en la 
+direccion de punteo 0://
+Puede ser
+
+La cuestion es que sigue bugueandose.
+
+Voy a sacar lo del boton S2
+
+Me quedo solo con S1 y veo como hacer para grabar distintos 
+archivos sin tener que ir modificando los nombres en
+waveplayer y waverecorder
+
+**********************************************************************************************************
+26/02/23
+
+El problema está en que si aprieto el S1 por ejemplo empieza a grabar
+y CmdIndex se pone en CMD_RECORD. Ahora si aprieto el S2 va a pasar a 
+CMD_SOTP. No va a empezar a grabar el segundo sonido.
+
+Por esto mismo, voy a crear dos estados
+Uno se activa presionando S1 y S5 al mismo tiempo. GRABACIÓN
+Una vez que entre a este estado, no tiene que salir a no se 
+que se active el otro estado.
+
+Una vez logrado eso, leo cada boton.
+Si por ejemplo presiono el 1, se pasa el nombre 1:// rec_01.wav
+como parametro a waverecorder, para que lo guarde ahí.
+
+Si vuelvo a presionar tiene que quedarse en STOP del trcord.
+
+Eso es todo lo que tiene que hacer este primer estado. Para
+todos los pulsadores lo mismo.
+
+
+Otro se activa presionando S11 y S15. REPRODUCCIÓN.
+Ahora también el programa debe quedar en esa connfiguración de estado.
+Por lo que no puede salir.
+
+Presiono 3 y se pasa como parametro a waveplayer, el nombre
+del archivo que corresponde al pulsador 3. 
+
+Si vuelvo a apretar queda en STOP de play.//puedo agregar un contador para esto
