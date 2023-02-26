@@ -2532,7 +2532,7 @@ y CmdIndex se pone en CMD_RECORD. Ahora si aprieto el S2 va a pasar a
 CMD_SOTP. No va a empezar a grabar el segundo sonido.
 
 Por esto mismo, voy a crear dos estados
-Uno se activa presionando S1 y S5 al mismo tiempo. GRABACIÓN
+Uno se activa presionando S1 y S3 al mismo tiempo. GRABACIÓN
 Una vez que entre a este estado, no tiene que salir a no se 
 que se active el otro estado.
 
@@ -2554,3 +2554,40 @@ Presiono 3 y se pasa como parametro a waveplayer, el nombre
 del archivo que corresponde al pulsador 3. 
 
 Si vuelvo a apretar queda en STOP de play.//puedo agregar un contador para esto
+
+Me acabo de dar cuenta que la columna 4 si funciona bien, el tema es que no le cambiaba el puerto
+GPIO al que estaba asignado. Como C1, C2 y C3 son de GPIOA y C4 de GPIOD, copié y pegué
+y la manquee.
+
+Voy a crear una variable de tipo string que pueda tomar distintas constantes
+
+#define grabando 1;
+#define reproduciendo 2;
+#define parado 3;
+
+static estado_de_audio uint_32;
+
+char NOMBRE[11];
+
+if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_1)==0) && (HAL_GPIO_ReadPin(GPIOA, COLUMNA_3))){
+		contador++;
+		if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_1)==0) && (HAL_GPIO_ReadPin(GPIOA, COLUMNA_3)) && (contador==80) && (cambiar_estado==1)){
+		
+		estado_de_audio=grabando;
+		}}
+	
+while (estado_de_audio==grabando){//esto seguro lo tenga que cambiar a if's porque no está bien tener ciclos en el systick
+
+	if (HAL_GPIO_ReadPin(GPIOA, COLUMNA_1)==0) {
+	contador_1++;
+	
+	if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_1)==0) && (contador==80) && (cambiar_estado==1)){
+		NOMBRE="1:rec_01.wav"
+		
+	}
+	}
+}
+
+algo así
+Despues en la parte de arriba tendría que llamar a 
+WaveRecorderProcess(NOMBRE);
