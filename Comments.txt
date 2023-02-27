@@ -2591,3 +2591,42 @@ while (estado_de_audio==grabando){//esto seguro lo tenga que cambiar a if's porq
 algo así
 Despues en la parte de arriba tendría que llamar a 
 WaveRecorderProcess(NOMBRE);
+
+Lo podría probar con las luces de nuevo
+Para ver si entra a los estados de grabacion y 
+reproducción. Ypara después probar
+como funcionan los llamados a los procedimietnos exteriores
+con parámetros actuales y formales nuevos, osea distinto de void.
+**************************************************************************************************************
+27/2/23
+
+Voy a probar lo siguiente para la lectura de ambos botones
+
+if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_1)==0) && (HAL_GPIO_ReadPin(GPIOD, COLUMNA_4))){
+		contador++;
+		if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_1)==0) && (HAL_GPIO_ReadPin(GPIOD, COLUMNA_4)) && (contador==1000) && (cambiar_estado==1)){
+			cambiar_estado=0;
+ 		 	 contador=0;
+		 	 estadoanterior=1;
+
+		}}
+else {
+		 cambiar_estado=1;
+	}
+
+	if (estadoanterior==1){
+		 tiempo++;
+		 BSP_LED_On(LED6);
+	if (tiempo==10000) {
+		 BSP_LED_Off(LED6);
+		 tiempo=0;
+		 estadoanterior=0;
+	}}
+		}}
+
+No sé porqué entra al if cuando solo presiono S1 y no cuando se cumple la condición de apretar ambos
+Pero me dí cuenta que me sirve.
+Si por ejemplo mantengo pulsado por 3 segundos el S1 que entre en una configuración
+y si tengo apretado S16 por 3 segundos que entre a otra por ej.
+
+ERA PORQUE NO ESTABA PONIENDO HAL_GPIO_ReadPin(GPIOD, COLUMNA_4)==0 edeeeoooota.
