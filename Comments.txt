@@ -2630,3 +2630,92 @@ Si por ejemplo mantengo pulsado por 3 segundos el S1 que entre en una configurac
 y si tengo apretado S16 por 3 segundos que entre a otra por ej.
 
 ERA PORQUE NO ESTABA PONIENDO HAL_GPIO_ReadPin(GPIOD, COLUMNA_4)==0 edeeeoooota.
+
+ HAL_GPIO_WritePin(GPIOD, FILA_1, GPIO_PIN_RESET);
+ HAL_GPIO_WritePin(GPIOD, FILA_2, GPIO_PIN_SET);
+ HAL_GPIO_WritePin(GPIOD, FILA_3, GPIO_PIN_SET);
+ HAL_GPIO_WritePin(GPIOD, FILA_4, GPIO_PIN_SET);
+
+ if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_1)==0) && (HAL_GPIO_ReadPin(GPIOD, COLUMNA_4)==0)){
+ 		contador++;
+ 		if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_1)==0) && (HAL_GPIO_ReadPin(GPIOD, COLUMNA_4)==0) && (contador==1000) && (cambiar_estado==1)){
+ 			cambiar_estado=0;
+  		 	 contador=0;
+ 		 	 estadoanterior=1;
+
+ 		}}
+ else {
+ 		 cambiar_estado=1;
+ 	}
+
+ 	if (estadoanterior==1){
+ 		 tiempo++;
+ 		 BSP_LED_On(LED6);
+ 	if (tiempo==10000) {
+ 		 BSP_LED_Off(LED6);
+ 		 tiempo=0;
+ 		 estadoanterior=0;
+ 	}}
+
+
+Ahora quiero probar llamar a una funcion previamente declarada, pasandole 
+por parametro una variable.
+
+LED4
+
+void procedimiento (estadoanterior){
+
+	if (estadoanterior==1){
+		 tiempo++;
+		 BSP_LED_On(LED6);
+	if (tiempo==10000) {
+		 BSP_LED_Off(LED6);
+		 tiempo=0;
+		 estadoanterior=0;
+	}}
+}
+
+procedimiento(estadoanterior);
+
+
+
+Calate la que acabo de hacer
+
+ static uint32_t estadoanterior=0;
+
+ void procedimiento (uint32_t *estadoanterior){
+
+	 static uint32_t tiempito;
+
+ 	if (*estadoanterior==1){
+ 		 tiempito++;
+ 		 BSP_LED_On(LED6);
+ 	if (tiempito==5000) {
+ 		 BSP_LED_Off(LED6);
+ 		 tiempito=0;
+ 		 *estadoanterior=0;
+ 	}}
+ }
+
+ HAL_GPIO_WritePin(GPIOD, FILA_1, GPIO_PIN_RESET);
+ HAL_GPIO_WritePin(GPIOD, FILA_2, GPIO_PIN_SET);
+ HAL_GPIO_WritePin(GPIOD, FILA_3, GPIO_PIN_SET);
+ HAL_GPIO_WritePin(GPIOD, FILA_4, GPIO_PIN_SET);
+
+ if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_1)==0) && (HAL_GPIO_ReadPin(GPIOD, COLUMNA_4)==0)){
+ 		contador++;
+ 		if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_1)==0) && (HAL_GPIO_ReadPin(GPIOD, COLUMNA_4)==0) && (contador==1000) && (cambiar_estado==1)){
+ 			cambiar_estado=0;
+  		 	 contador=0;
+ 		 	 estadoanterior=1;
+
+ 		}}
+ else {
+ 		 cambiar_estado=1;
+ 	}
+
+ procedimiento(&estadoanterior);
+
+Por supuesto que funciona!
+
+Etzelente, me puedo ir a dormir muy  muy muy en paz. Adiosín.
