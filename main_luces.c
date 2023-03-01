@@ -38,7 +38,7 @@ TIM_HandleTypeDef hTimLed;
 TIM_OC_InitTypeDef sConfigLed;
 #define SYSTICK_FREQ_HZ 1000
 char NOMBRE[11];
-
+uint8_t indice;
 char switches[4][4]={  {'1','2','3','4'},
 			           {'5','6','7','8'},
 			           {'9','A','B','C'},
@@ -910,6 +910,7 @@ void SysTickHook (void) // Para colgarse del System Tick
 
 		if ((estadoanterior==1)){
 				procedimiento_grabar();
+				indice=0;
 			}
 
 
@@ -917,107 +918,12 @@ void SysTickHook (void) // Para colgarse del System Tick
 
 		if (( (estadoanterior==2))){
 			procedimiento_reproducir();
+			indice=1;
 		}
 
 }
 
 
-//void SysTickHook (void) // Para colgarse del System Tick
-//
-//{
-// static uint32_t contador=0;
-// static uint32_t cambiar_estado;
-//
-//  if(HAL_GPIO_ReadPin (GPIOA, Blue_button))
-//  {contador++;
-//
-//
-//	if(HAL_GPIO_ReadPin (GPIOA, Blue_button) && (contador>=30) && (cambiar_estado==1)){
-//		cambiar_estado=0;
-//
-//      if (CmdIndex == CMD_RECORD)
-//      {
-//        RepeatState = REPEAT_ON;
-//        CmdIndex = CMD_STOP;
-//      }
-//
-//      else if (CmdIndex == CMD_PLAY)
-//      {
-//        CmdIndex = CMD_STOP;
-//        RepeatState = REPEAT_OFF;
-//      }
-//
-//      else if (CmdIndex == CMD_STOP)
-//      {
-//    	  if (RepeatState==REPEAT_ON){
-//    		  CmdIndex=CMD_PLAY;
-//    		  BSP_LED_Off(LED5);
-//    	  }
-//
-//		  else if (RepeatState==REPEAT_OFF){
-//			  CmdIndex=CMD_RECORD;
-//			  BSP_LED_On(LED5);
-//		  }
-//      }
-//      contador=0;
-//
-//    }
-//
-//  }
-//
-// else{
-// 		cambiar_estado=1;
-//
-// 	}
-//
-////  if(HAL_GPIO_ReadPin (GPIOA, Reset_button))
-////    {
-////      if (cambiar_estado == 0)
-////      {
-////        /* Resume playing Wave status */
-////        PauseResumeStatus = RESUME_STATUS;
-////        cambiar_estado = 1;
-////      }
-////      else
-////      {
-////        /* Pause playing Wave status */
-////        PauseResumeStatus = PAUSE_STATUS;
-////        cambiar_estado = 0;
-////      }
-////    }
-//
-//}
-
-
-//
-//void Estados (void){
-//
-//	if (CmdIndex == CMD_RECORD)
-//      	{
-//       		 RepeatState = REPEAT_ON;
-//       	 	CmdIndex = CMD_STOP;
-//      	}
-//
-//     		else if (CmdIndex == CMD_PLAY)
-//      	{
-//       		 CmdIndex = CMD_STOP;
-//        		 RepeatState = REPEAT_OFF;
-//     		}
-//
-//     		else if (CmdIndex == CMD_STOP)
-//      	{
-//    	  		if (RepeatState==REPEAT_ON){
-//    		  		CmdIndex=CMD_PLAY;
-//    		  		BSP_LED_Off(LED5);
-//    	  		}
-//
-//		  	else if (RepeatState==REPEAT_OFF){
-//				CmdIndex=CMD_RECORD;
-//			  	BSP_LED_On(LED5);
-//		  	}
-//      	}
-//
-//}
 #ifdef USE_FULL_ASSERT
 
 /**
