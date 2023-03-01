@@ -2719,3 +2719,542 @@ Calate la que acabo de hacer
 Por supuesto que funciona!
 
 Etzelente, me puedo ir a dormir muy  muy muy en paz. Adiosín.
+
+**********************************************************************************************************************
+************************************************************************************
+28/02/23
+
+El estado en el que tendría que arrancar toda la matriz sería en STOP.
+Sería como llenar la matriz de ceros (compu)
+
+La idea sería entonces:
+
+Si aprieto S1 y S4 entra en el estado grabar:
+Guardo en la variable estadoanterior por ej
+
+
+//el problema de llamarlo acá afuera es que mas abajo lo voy a tener que llamar de nuevo para el otro led y se
+ //acorta a la mitad el tiempo de encendido
+ //Debería crear una variable que pregunte si ya se entró a algun estado en particular y que si as así que no vuelva a entrar
+
+este era el problema que tenia de llamar dos veces a procedimiento en las distintas configuraciones
+
+Pero creo que variable_auxiliar está de más. La quiero dejar solo porque 
+invilucra haber agragado la libreria sbdbool.h jejej
+
+Copio lo que funciono antes de modificarlo 
+
+ void procedimiento_grabar (uint32_t *estadoanterior, bool *variable_auxiliar){
+
+	 static uint32_t tiempito;
+
+ 	if (*estadoanterior==1){
+ 		 tiempito++;
+ 		 BSP_LED_On(LED6);
+
+ 	if (tiempito==5000) {
+ 		 BSP_LED_Off(LED6);
+ 		 tiempito=0;
+ 		 *estadoanterior=0;
+ 		 *variable_auxiliar=false;
+ 	}}
+ 	else if (*estadoanterior==2){
+ 		tiempito++;
+ 		BSP_LED_On(LED4);
+
+ 		if (tiempito==10000) {
+ 		 	 BSP_LED_Off(LED4);
+ 		 	 tiempito=0;
+ 		 	 *estadoanterior=0;
+ 		 	 *variable_auxiliar=false;
+ 		 	}
+ 	}
+ }
+
+
+FUNCIONA
+
+static bool variable_auxiliar;
+
+ void procedimiento_grabar ( bool *variable_auxiliar){
+
+	 static uint32_t tiempito;
+
+
+ 		 tiempito++;
+ 		 BSP_LED_On(LED6);
+
+ 	if (tiempito==5000) {
+ 		 BSP_LED_Off(LED6);
+ 		 tiempito=0;
+
+ 		 *variable_auxiliar=false;
+ 	}
+
+ }
+
+ void procedimiento_reproducir ( bool *variable_auxiliar){
+
+ 	 static uint32_t tiempito;
+
+
+  		 tiempito++;
+  		 BSP_LED_On(LED4);
+
+  	if (tiempito==5000) {
+  		 BSP_LED_Off(LED4);
+  		 tiempito=0;
+
+  		 *variable_auxiliar=false;
+  	}
+
+  }
+ok
+
+funciona
+pero
+en el estadoanterior 2 no se apaga el led verde
+
+ void procedimiento_grabar (){
+
+	 static uint32_t tiempito;
+	 static uint32_t variable_S1;
+
+	 HAL_GPIO_WritePin(GPIOD, FILA_1, GPIO_PIN_RESET);
+	 HAL_GPIO_WritePin(GPIOD, FILA_2, GPIO_PIN_SET);
+	 HAL_GPIO_WritePin(GPIOD, FILA_3, GPIO_PIN_SET);
+	 HAL_GPIO_WritePin(GPIOD, FILA_4, GPIO_PIN_SET);
+
+	 if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_1)==0)){
+	  		contador++;
+	  		if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_1)==0) && (contador==1000) && (cambiar_estado==1)){
+	  			cambiar_estado=0;
+	   		 	 contador=0;
+	  		 	 variable_S1=1;
+	  		}}
+
+	 if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_2)==0)){
+	 	  		contador++;
+	 	  		if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_2)==0) && (contador==1000) && (cambiar_estado==1)){
+	 	  			cambiar_estado=0;
+	 	   		 	 contador=0;
+	 	  		 	 variable_S1=2;
+	 	  		}}
+
+
+	 if (variable_S1==1){
+ 		 tiempito++;
+ 		 BSP_LED_On(LED6);
+
+ 	if (tiempito==5000) {
+ 		 BSP_LED_Off(LED6);
+ 		 tiempito=0;
+ 		 variable_S1=0;
+
+ 	}}
+
+	 if (variable_S1==2){
+	  		 tiempito++;
+	  		 BSP_LED_On(LED4);
+
+	  	if (tiempito==5000) {
+	  		 BSP_LED_Off(LED4);
+	  		 tiempito=0;
+	  		 variable_S1=0;
+
+	  	}}
+
+
+ }
+
+ void procedimiento_reproducir ( ){
+
+ 	 static uint32_t tiempito;
+
+
+  		 tiempito++;
+  		 BSP_LED_On(LED4);
+
+  	if (tiempito==5000) {
+  		 BSP_LED_Off(LED4);
+  		 tiempito=0;
+
+
+  	}
+
+  }
+
+ HAL_GPIO_WritePin(GPIOD, FILA_1, GPIO_PIN_RESET);
+ HAL_GPIO_WritePin(GPIOD, FILA_2, GPIO_PIN_SET);
+ HAL_GPIO_WritePin(GPIOD, FILA_3, GPIO_PIN_SET);
+ HAL_GPIO_WritePin(GPIOD, FILA_4, GPIO_PIN_SET);
+
+ if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_1)==0) && (HAL_GPIO_ReadPin(GPIOD, COLUMNA_4)==0)){
+ 		contador++;
+ 		if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_1)==0) && (HAL_GPIO_ReadPin(GPIOD, COLUMNA_4)==0) && (contador==1000) && (cambiar_estado==1)){
+ 			cambiar_estado=0;
+  		 	 contador=0;
+ 		 	 estadoanterior=1;
+
+ 		}}
+ else {
+ 		 cambiar_estado=1;
+ 	}
+if ((estadoanterior==1)){
+	procedimiento_grabar();
+}
+
+
+ HAL_GPIO_WritePin(GPIOD, FILA_1, GPIO_PIN_SET);
+ HAL_GPIO_WritePin(GPIOD, FILA_2, GPIO_PIN_SET);
+ HAL_GPIO_WritePin(GPIOD, FILA_3, GPIO_PIN_SET);
+ HAL_GPIO_WritePin(GPIOD, FILA_4, GPIO_PIN_RESET);
+
+
+ if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_1)==0) && (HAL_GPIO_ReadPin(GPIOD, COLUMNA_4)==0)){
+ 		contador_2++;
+ 		if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_1)==0) && (HAL_GPIO_ReadPin(GPIOD, COLUMNA_4)==0) && (contador_2==1000) && (cambiar_estado==1)){
+ 			cambiar_estado=0;
+  		 	 contador_2=0;
+ 		 	 estadoanterior=2;
+
+ 		}}
+ else {
+ 		 cambiar_estado=1;
+ 	}
+
+ if (( (estadoanterior==2))){
+ 	procedimiento_reproducir();
+ }
+
+Voy a agregarle lo de la lectura de botones dentro del procedimiento reproducir
+para ver si de esa manera funciona correctamente.
+
+
+FUNCIONA MARAVILLOSAMENTE
+
+
+void SysTickHook (void) // Para colgarse del System Tick
+
+{
+ static uint32_t contador=0, contador_2=0, contador_3=0, contador_4=0, contador_5=0, contador_6=0, contador_7=0, contador_8=0;
+ static uint32_t contador_9=0, contador_10=0, contador_11=0, contador_12=0, contador_13=0, contador_14=0, contador_15=0;
+ static uint32_t contador_16=0;
+ static uint32_t cambiar_estado,tiempo,  tiempo_2, estadoanterior_2, tiempo_3, estadoanterior_3, tiempo_4, estadoanterior_4;
+ //char boton;
+ static uint32_t estadoanterior=0;
+
+
+ void procedimiento_grabar (){
+
+	 static uint32_t tiempito;
+	 static uint32_t variable_S1;
+
+	 HAL_GPIO_WritePin(GPIOD, FILA_1, GPIO_PIN_RESET);
+	 HAL_GPIO_WritePin(GPIOD, FILA_2, GPIO_PIN_SET);
+	 HAL_GPIO_WritePin(GPIOD, FILA_3, GPIO_PIN_SET);
+	 HAL_GPIO_WritePin(GPIOD, FILA_4, GPIO_PIN_SET);
+
+	 if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_1)==0)){
+	  		contador++;
+	  		if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_1)==0) && (contador==1000) && (cambiar_estado==1)){
+	  			cambiar_estado=0;
+	   		 	 contador=0;
+	  		 	 variable_S1=1;
+	  		}}
+
+	 if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_2)==0)){
+	 	  		contador++;
+	 	  		if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_2)==0) && (contador==1000) && (cambiar_estado==1)){
+	 	  			cambiar_estado=0;
+	 	   		 	 contador=0;
+	 	  		 	 variable_S1=2;
+	 	  		}}
+
+
+	 if (variable_S1==1){
+ 		 tiempito++;
+ 		 BSP_LED_On(LED6);
+
+ 	if (tiempito==6000) {
+ 		 BSP_LED_Off(LED6);
+ 		 tiempito=0;
+ 		 variable_S1=0;
+
+ 	}}
+
+	 if (variable_S1==2){
+	  		 tiempito++;
+	  		 BSP_LED_On(LED4);
+
+	  	if (tiempito==6000) {
+	  		 BSP_LED_Off(LED4);
+	  		 tiempito=0;
+	  		 variable_S1=0;
+
+	  	}}
+
+
+ }
+
+ void procedimiento_reproducir ( ){
+
+ 	 static uint32_t tiempito;
+ 	 static uint32_t variable_S1;
+
+ 		 HAL_GPIO_WritePin(GPIOD, FILA_1, GPIO_PIN_RESET);
+ 		 HAL_GPIO_WritePin(GPIOD, FILA_2, GPIO_PIN_SET);
+ 		 HAL_GPIO_WritePin(GPIOD, FILA_3, GPIO_PIN_SET);
+ 		 HAL_GPIO_WritePin(GPIOD, FILA_4, GPIO_PIN_SET);
+
+ 		 if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_1)==0)){
+ 		  		contador++;
+ 		  		if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_1)==0) && (contador==1000) && (cambiar_estado==1)){
+ 		  			cambiar_estado=0;
+ 		   		 	 contador=0;
+ 		  		 	 variable_S1=1;
+ 		  		}}
+
+ 		 if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_2)==0)){
+ 		 	  		contador++;
+ 		 	  		if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_2)==0) && (contador==1000) && (cambiar_estado==1)){
+ 		 	  			cambiar_estado=0;
+ 		 	   		 	 contador=0;
+ 		 	  		 	 variable_S1=2;
+ 		 	  		}}
+
+
+ 		if (variable_S1==1){
+ 		 		 tiempito++;
+ 		 		 BSP_LED_On(LED6);
+
+ 		 	if (tiempito==2000) {
+ 		 		 BSP_LED_Off(LED6);
+ 		 		 tiempito=0;
+ 		 		 variable_S1=0;
+
+ 		 	}}
+
+ 			 if (variable_S1==2){
+ 			  		 tiempito++;
+ 			  		 BSP_LED_On(LED4);
+
+ 			  	if (tiempito==2000) {
+ 			  		 BSP_LED_Off(LED4);
+ 			  		 tiempito=0;
+ 			  		 variable_S1=0;
+
+ 			  	}}
+
+
+
+  	}
+
+
+
+ HAL_GPIO_WritePin(GPIOD, FILA_1, GPIO_PIN_RESET);
+ HAL_GPIO_WritePin(GPIOD, FILA_2, GPIO_PIN_SET);
+ HAL_GPIO_WritePin(GPIOD, FILA_3, GPIO_PIN_SET);
+ HAL_GPIO_WritePin(GPIOD, FILA_4, GPIO_PIN_SET);
+
+ if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_1)==0) && (HAL_GPIO_ReadPin(GPIOD, COLUMNA_4)==0)){
+ 		contador++;
+ 		if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_1)==0) && (HAL_GPIO_ReadPin(GPIOD, COLUMNA_4)==0) && (contador==1000) && (cambiar_estado==1)){
+ 			cambiar_estado=0;
+  		 	 contador=0;
+ 		 	 estadoanterior=1;
+
+ 		}}
+ else {
+ 		 cambiar_estado=1;
+ 	}
+if ((estadoanterior==1)){
+	procedimiento_grabar();
+}
+
+
+//
+//	if (HAL_GPIO_ReadPin(GPIOA, COLUMNA_1)==0){
+//		contador++;
+//		if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_1)==0) && (contador==80) && (cambiar_estado==1)){
+//			cambiar_estado=0;
+//		 	 contador=0;
+//		 	 estadoanterior=1;
+//		 	if (CmdIndex == CMD_RECORD)
+//		 	{
+//		 		 RepeatState = REPEAT_ON;
+//		 	     CmdIndex = CMD_STOP;
+//		 	}
+//
+//		 	else if (CmdIndex == CMD_PLAY)
+//		 	{
+//		 	    CmdIndex = CMD_STOP;
+//		 	    RepeatState = REPEAT_OFF;
+//		 	}
+//
+//		 	else if (CmdIndex == CMD_STOP)
+//		   {
+//		   		if (RepeatState==REPEAT_ON){
+//		 			CmdIndex=CMD_PLAY;
+//		 		}
+//
+//		 		else if (RepeatState==REPEAT_OFF){
+//		 			CmdIndex=CMD_RECORD;
+//		 			RepeatState=REPEAT_ON;
+//		 		}
+//		 	}
+//
+//
+//		 }
+//	}
+
+//	if (HAL_GPIO_ReadPin(GPIOA, COLUMNA_2)==0){
+//			contador_2++;
+//			if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_2)==0) && (contador_2>=80) && (cambiar_estado==1)){
+//				cambiar_estado=0;
+//			 	 contador_2=0;
+//
+//			 	if (CmdIndex == CMD_RECORD)
+//			 	{
+//			 		 RepeatState = REPEAT_ON;
+//			 	     CmdIndex = CMD_STOP;
+//			 	}
+//
+//			 	else if (CmdIndex == CMD_PLAY)
+//			 	{
+//			 	    CmdIndex = CMD_STOP;
+//			 	    RepeatState = REPEAT_OFF;
+//			 	}
+//
+//			 	else if (CmdIndex == CMD_STOP)
+//			   {
+//			   		if (RepeatState==REPEAT_ON){
+//			 			CmdIndex=CMD_PLAY;
+//			 		}
+//
+//			 		else if (RepeatState==REPEAT_OFF){
+//			 			CmdIndex=CMD_RECORD;
+//			 			RepeatState=REPEAT_ON;
+//			 		}
+//			 	}
+//
+//
+//			 }
+//		}
+
+
+ HAL_GPIO_WritePin(GPIOD, FILA_1, GPIO_PIN_SET);
+ HAL_GPIO_WritePin(GPIOD, FILA_2, GPIO_PIN_RESET);
+ HAL_GPIO_WritePin(GPIOD, FILA_3, GPIO_PIN_SET);
+ HAL_GPIO_WritePin(GPIOD, FILA_4, GPIO_PIN_SET);
+
+	if (HAL_GPIO_ReadPin(GPIOA, COLUMNA_1)==0){
+		contador++;
+		if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_1)==0) && (contador>=30) && (cambiar_estado==1)){
+			cambiar_estado=0;
+
+
+		 	 contador=0;
+		 	 estadoanterior=4;
+
+	}}
+	else {
+		 cambiar_estado=1;
+	}
+
+	if (estadoanterior==4){
+		 tiempo++;
+		 BSP_LED_On(LED6);
+	if (tiempo==4000) {
+		 BSP_LED_Off(LED6);
+		 tiempo=0;
+		 estadoanterior=0;
+	}}
+
+
+
+ HAL_GPIO_WritePin(GPIOD, FILA_1, GPIO_PIN_SET);
+ HAL_GPIO_WritePin(GPIOD, FILA_2, GPIO_PIN_SET);
+ HAL_GPIO_WritePin(GPIOD, FILA_3, GPIO_PIN_RESET);
+ HAL_GPIO_WritePin(GPIOD, FILA_4, GPIO_PIN_SET);
+
+	if (HAL_GPIO_ReadPin(GPIOD, COLUMNA_4)==0){
+		contador++;
+		if ((HAL_GPIO_ReadPin(GPIOD, COLUMNA_4)==0) && (contador>=30) && (cambiar_estado==1)){
+			cambiar_estado=0;
+
+
+		 	 contador=0;
+		 	 estadoanterior=6;
+
+	}}
+	else {
+		 cambiar_estado=1;
+	}
+
+	if (estadoanterior==6){
+		 tiempo++;
+		 BSP_LED_On(LED6);
+	if (tiempo==5000) {
+		 BSP_LED_Off(LED6);
+		 tiempo=0;
+		 estadoanterior=0;
+	}}
+
+
+ HAL_GPIO_WritePin(GPIOD, FILA_1, GPIO_PIN_SET);
+ HAL_GPIO_WritePin(GPIOD, FILA_2, GPIO_PIN_SET);
+ HAL_GPIO_WritePin(GPIOD, FILA_3, GPIO_PIN_SET);
+ HAL_GPIO_WritePin(GPIOD, FILA_4, GPIO_PIN_RESET);
+
+
+ if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_1)==0) && (HAL_GPIO_ReadPin(GPIOD, COLUMNA_4)==0)){
+ 		contador_2++;
+ 		if ((HAL_GPIO_ReadPin(GPIOA, COLUMNA_1)==0) && (HAL_GPIO_ReadPin(GPIOD, COLUMNA_4)==0) && (contador_2==1000) && (cambiar_estado==1)){
+ 			cambiar_estado=0;
+  		 	 contador_2=0;
+ 		 	 estadoanterior=2;
+
+ 		}}
+ else {
+ 		 cambiar_estado=1;
+ 	}
+
+ if (( (estadoanterior==2))){
+ 	procedimiento_reproducir();
+ }
+
+}
+
+
+lo que seria el estadoanterior referiría a entrar en el modo grabación o reproduccion
+La variable variable_S1 definiría el llamado a la grabación con el parametro del nombre
+correspondiente.
+
+
+
+
+Crear case para cada variable_S1 y un procedimiento que encienda las luces.
+
+Terminar de hacer todo con las luces. Lo guardo y después paso
+a lo de grabar y reproducir.
+
+
+Ahora quiero hacer un procedimiento MAPEO porque sino es mucho código
+
+Como no podía ser de otra manera, anduvo todo pipí cucú.
+
+El tema ahora es passarlo a grabar y reproducir y comunicarse
+con el programa principal enviando por parametros actuales
+y formales, los estados de CmdIndex yyyyy RepeatState.
+
+Allá vamos, deseenme suerte.
+
+Yo quería crear una variable que me guardara los nombres con los que debía invocar
+tanto a la funcion WaveRecorderStart() como a la WavePlayerStart(), utilizandola
+como parametro.
+
+Pero no me deja pasarle parametros a las funciones....
+Por eso hago todo directamente.
+
+f
