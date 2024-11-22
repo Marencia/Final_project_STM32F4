@@ -40,9 +40,9 @@ TIM_OC_InitTypeDef sConfigLed;
 char NOMBRE[11];
 uint8_t indice;
 char switches[4][4]={  {'1','2','3','4'},
-			           {'5','6','7','8'},
-			           {'9','A','B','C'},
-			           {'D','F','G','H'}};
+		       {'5','6','7','8'},
+		       {'9','A','B','C'},
+		       {'D','F','G','H'}};
 
 /* Counter for User button presses. Defined as external in waveplayer.c file */
 __IO uint32_t PressCount = 0;
